@@ -4,7 +4,7 @@ def create_random_num(a, b):
     return random.randint(a, b)
 
 def new_function():
-    return "hello"
+    return "hello world"
 
 
 if __name__ == "__main__":
