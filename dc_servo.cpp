@@ -1,23 +1,21 @@
 #include <Servo.h>
-#include <IRremote.h>
 
+//distance detector
 int echoPin=7;
 int trigPin=6;
 int pingTravelTime;
-
 float pingTravelDistance;
 
 float distanceToTarget;
 float resultDistance;
 float leftDistance;
 float rightDistance;
-
-int receiverPin=4;
+float fwdDistance;
 
 int servoPin=13;
 int servoVal;
 
-String myCom;
+String command;
 int dt;
 
 int Speed=255;
@@ -33,8 +31,6 @@ int in4=10;
 int dir1=1;
 int dir2=1;
 
-IRrecv IR(receiverPin);
-decode_results cmd;
 Servo Xservo;
 
 
@@ -42,7 +38,6 @@ void setup() {
   // put your setup code here, to run once:
   Serial.begin(9600);
   pinMode(servoPin, OUTPUT);
-  pinMode(receiverPin, INPUT);
   
   pinMode(enA, OUTPUT);
   pinMode(in1, OUTPUT);
@@ -56,127 +51,24 @@ void setup() {
   pinMode(echoPin, INPUT);
   
   Xservo.attach(servoPin);
-  IR.enableIRIn();
 }
 
 void loop() {
-
-    float resultDistance = distanceControl();
-    if (resultDistance >= 50) {
-      myCom = "rev";
-    } else {
-      myCom = "stop";
-    }
-
-    if (myCom=="stop") {
-      motorControl(0, 0, 0, 0);
-
-      servoControl();
-
-      if (leftDistance > rightDistance) {
-        myCom = "left";
-      }
-      if (leftDistance < rightDistance) {
-        myCom = "right";
-      }
-    }
-
-    delay(1000);
-
-    
-
-    
-    
-
-//  Xservo.write(50);
-//  Serial.println("Left distance is ");
-//  distanceControl();
-//  delay(1000);
-//  
-//  Xservo.write(130);
-//  Serial.println("Right distance is ");
-//  distanceControl();
-//  delay(1000);
-//
-//  Xservo.write(90);
-//  Serial.println("Center distance is ");
-//  distanceControl();
-//  delay(1000);
-
-  //servoControl();
-
-//  while (IR.decode(&cmd) == 0) {  
-//  }
-
-//  Serial.println(cmd.value, HEX);
-//  delay(100);
-//  IR.resume();
-
-  //irControl();
   
-
+  //reading input from serial monitor
+  if (Serial.available() > 0) {
+    command = Serial.read();
+  }
   
-
-
-//commands
-
-  
-  
-//drive directions
-
-  //default forward
-  if (myCom=="zero") {
-    motorControl(255, 255, 1, 1);
-  }
-
-  //stop
-  if (myCom=="stop") {
-    motorControl(0, 0, 0, 0);
-  }
-
-  //move forward
-  if (myCom=="fwd") {
-    motorControl(255, 255, 1, 1);
-  }
-
-  //move backward
-  if (myCom=="rev") {
-    motorControl(255, 255, 0, 0);
-
-  }
-
-  //decrease speed
-//  if (myCom=="vol-") {
-//    Speed -= 10;
-//    if (Speed <= 200) {
-//      Speed = 0;
-//    }
-//    analogWrite(enA, Speed);
-//    analogWrite(enB, Speed);
-//
-//  }
-//
-//  //increase speed
-//  if (myCom=="vol+") {
-//    Speed += 10;
-//    if (Speed >= 255) {
-//      Speed=255;
-//    }
-//    analogWrite(enA, Speed);
-//    analogWrite(enB, Speed);
-//
-//  }
-
-  //left
-  if (myCom=="left") {
+  if (command != "fwd" {
     motorControl(255, 255, 1, 0);
-
+    delay(500);
   }
-
-  //right
-  if (myCom=="right") {
-    motorControl(255, 255, 0, 1);
-    
+  
+  if (command = "fwd") {
+    motorControl(255, 255, 1, 1);
+  } else {
+    pass;
   }
 
 }
@@ -206,50 +98,30 @@ void motorControl(int SpeedA, int SpeedB, int dir1, int dir2) {
   digitalWrite(in4, LOW);
   analogWrite(enB, 0);
 
-//  IR.resume();
-//  delay(100);
 }
 
-void irControl() {
-  if (cmd.value==0xFF10EF){
-    myCom="left";
-    Serial.println(myCom); 
+void autoMovement() {
+  float resultDistance = distanceControl();
+  if (resultDistance >= 50) {
+    myCom = "rev";
+  } else {
+    myCom = "stop";
   }
 
-  if (cmd.value==0xFF5AA5){
-    myCom="right";
-    Serial.println(myCom); 
-  }
+  if (myCom=="stop") {
+    motorControl(0, 0, 0, 0);
 
-  if (cmd.value==0xFF22DD) {
-    myCom="rev";
-    Serial.println(myCom);
-  }
-  
-  if (cmd.value==0xFF02FD) {
-    myCom="fwd";
-    Serial.println(myCom);
-  }
+    servoControl();
 
-  if (cmd.value==0xFF6897) {
-    myCom="zero";
-    Serial.println(myCom);
+    if (leftDistance > rightDistance) {
+      myCom = "left";
+    }
+    if (leftDistance < rightDistance) {
+      myCom = "right";
+    }
   }
-  
-  if (cmd.value==0xFF30CF) {
-    myCom="one";
-    Serial.println(myCom);
-  }
+    delay(1000);
 
-  if (cmd.value==0xFFE01F) {
-    myCom="vol-";
-    Serial.println(myCom);
-  }
-
-  if (cmd.value==0xFFA857) {
-    myCom="vol+";
-    Serial.println(myCom);
-  }
 }
 
 void servoControl() {
@@ -262,8 +134,9 @@ void servoControl() {
   delay(1000);
 
   servoVal = 90;
+  fwdDistance = distanceControl();
+  delay(1000);
   Xservo.write(servoVal);
-  
 }
 
 float distanceControl() {
@@ -287,3 +160,5 @@ float distanceControl() {
   return distanceToTarget;
   
 }
+  
+
